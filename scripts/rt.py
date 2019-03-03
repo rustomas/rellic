@@ -5,16 +5,16 @@ import os
 import argparse
 
 
-def execute_cmd(filename, rellic):
-    subprocess.run(["../rellic-build/libraries/llvm/bin/clang", filename,
+def roundtrip(rellic, filename, clang):
+    subprocess.run([clang, filename,
                     "-o", "output1"])
     compl_process1 = subprocess.run(
         "./output1", capture_output=True, text=True)
-    subprocess.run(["../rellic-build/libraries/llvm/bin/clang", "-c",
+    subprocess.run([clang, "-c",
                     "-emit-llvm", filename, "-o", "roundtrip.bc"])
     subprocess.run([rellic, "--input",
                     "roundtrip.bc", "--output", "roundtrip.c"])
-    subprocess.run(["../rellic-build/libraries/llvm/bin/clang",
+    subprocess.run([clang,
                     "-Wno-everything", "roundtrip.c",
                     "-o", "output2"])
     compl_process2 = subprocess.run(
@@ -23,7 +23,6 @@ def execute_cmd(filename, rellic):
     os.remove("roundtrip.c")
     os.remove("output1")
     os.remove("output2")
-
     return compl_process1, compl_process2
 
 
@@ -40,9 +39,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("rellic", help="path to rellic-decomp")
     parser.add_argument("filename",
-                        help="path to source code file")
+                        help="path to source code test file")
+    parser.add_argument("clang", help="path to clang")
     args = parser.parse_args()
-    outputs = execute_cmd(args.filename, args.rellic)
+    outputs = roundtrip(args.rellic, args.filename, args.clang)
     compare(outputs)
 
 
